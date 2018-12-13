@@ -160,9 +160,28 @@ namespace SetRealTimeClockApp
         /************************************************************************/
         private void endProcessing()
         {
+            int i = 0;
+
             log_output("endProcessing");
             serialPort.Close();
-            System.Diagnostics.Process p = System.Diagnostics.Process.Start("C:\\PCAnalysisApp\\SleepCheckerApp.exe");
+
+            // SleepCheckerAppが起動していなかったら起動させる(リトライ5回)
+            while (Process.GetProcessesByName("SleepCheckerApp").Length <= 0 && i < 5)
+            {
+                System.Diagnostics.Process p = System.Diagnostics.Process.Start("C:\\PCAnalysisApp\\SleepCheckerApp.exe");
+                Task.Delay(1000);
+                i++;
+            }
+
+            if(i >= 5)
+            { // リトライ5回した場合はWindows再起動
+                log_output("[Reboot]");
+                ProcessStartInfo psi = new ProcessStartInfo();
+                psi.FileName = "shutdown.exe";
+                psi.Arguments = "-r -t 0";   // reboot
+                psi.CreateNoWindow = true;
+                Process p = Process.Start(psi);
+            }
             log_output("[CLOSE]SetRealTimeClockApp");
             this.Close();
         }
