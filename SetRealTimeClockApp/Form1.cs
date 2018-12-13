@@ -1,4 +1,8 @@
-﻿using System;
+﻿#define LOG_OUT // ログ出力
+
+using System;
+using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,9 +31,18 @@ namespace SetRealTimeClockApp
         string clock = "";
 //        string temp = "";
         bool ret = false;
+        
+        // ログ出力パス
+        string logPath = "C:\\log";
 
         public Form1()
         {
+            if (!Directory.Exists(logPath))
+            {
+                Directory.CreateDirectory(logPath);
+            }
+            logPath = logPath + "\\log.txt";
+
             InitializeComponent();
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
         }
@@ -115,7 +128,8 @@ namespace SetRealTimeClockApp
                             case "END":
                                 // システム時刻を設定する
                                 ret = SetLocalTime(ref sysTime);
-//                                label.Text = temp;
+                                log_output("[RTC]Set : " + ret);
+                                //                                label.Text = temp;
                                 break;
                             default:
                                 clock = data;
@@ -140,9 +154,24 @@ namespace SetRealTimeClockApp
         /************************************************************************/
         private void endProcessing()
         {
+            log_output("endProcessing");
             serialPort.Close();
             System.Diagnostics.Process p = System.Diagnostics.Process.Start("C:\\PCAnalysisApp\\SleepCheckerApp.exe");
+            log_output("[CLOSE]SetRealTimeClockApp");
             this.Close();
+        }
+
+        /************************************************************************/
+        /* 関数名   : log_output          			    		    			*/
+        /* 機能     : C:\\log\\log.txtに出力                                    */
+        /* 引数     : string : msg - ログ文言                                   */
+        /* 戻り値   : なし														*/
+        /************************************************************************/
+        private void log_output(string msg)
+        {
+#if LOG_OUT
+            File.AppendAllText(logPath, DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss.fff") + "    " + msg + Environment.NewLine);
+#endif
         }
     }
 }
