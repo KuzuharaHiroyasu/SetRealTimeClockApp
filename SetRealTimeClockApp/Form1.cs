@@ -69,13 +69,19 @@ namespace SetRealTimeClockApp
         /************************************************************************/
         private void writeData()
         {
+            int i = 0;
             byte[] param = new byte[1];
             param[0] = (byte)2; // 時刻設定コード
+
+            //時刻設定コマンド送信(リトライ5回)
             do
             {
+                log_output("writeData:" + i);
                 serialPort.Write(param, 0, param.Length);
                 Task.Delay(1000);
-            } while (!ret);
+                i++;
+            } while (!ret && i < 5);
+            
             endProcessing();
         }
 
