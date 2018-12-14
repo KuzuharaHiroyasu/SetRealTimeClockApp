@@ -62,6 +62,17 @@ namespace SetRealTimeClockApp
         }
 
         /************************************************************************/
+        /* 関数名   : FormMain_FormClosing             			    			*/
+        /* 機能     : フォームを閉じる時のイベント	                            */
+        /* 引数     : なし                                                      */
+        /* 戻り値   : なし														*/
+        /************************************************************************/
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            serialPort.Close();
+        }
+
+        /************************************************************************/
         /* 関数名   : writeData          						    			*/
         /* 機能     : 時刻設定コマンド送信  		                            */
         /* 引数     : なし                                                      */
@@ -73,14 +84,16 @@ namespace SetRealTimeClockApp
             byte[] param = new byte[1];
             param[0] = (byte)2; // 時刻設定コード
 
-            //時刻設定コマンド送信(リトライ5回)
+            System.Threading.Thread.Sleep(5000);
+
+            //時刻設定コマンド送信(リトライ10回)
             do
             {
                 log_output("writeData:" + i);
                 serialPort.Write(param, 0, param.Length);
-                Task.Delay(1000);
+                System.Threading.Thread.Sleep(300);
                 i++;
-            } while (!ret && i < 5);
+            } while (!ret && i < 10);
             
             endProcessing();
         }
@@ -168,8 +181,9 @@ namespace SetRealTimeClockApp
             // SleepCheckerAppが起動していなかったら起動させる(リトライ5回)
             while (Process.GetProcessesByName("SleepCheckerApp").Length <= 0 && i < 5)
             {
+                log_output("[ProcessStart]SleepCheckerApp");
                 System.Diagnostics.Process p = System.Diagnostics.Process.Start("C:\\PCAnalysisApp\\SleepCheckerApp.exe");
-                Task.Delay(1000);
+                System.Threading.Thread.Sleep(300);
                 i++;
             }
 
