@@ -42,6 +42,7 @@ namespace SetRealTimeClockApp
                 Directory.CreateDirectory(logPath);
             }
             logPath = logPath + "\\log.txt";
+            log_output("[START]SetRealTimeClockApp");
 
             InitializeComponent();
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
