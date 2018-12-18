@@ -210,8 +210,25 @@ namespace SetRealTimeClockApp
         private void log_output(string msg)
         {
 #if LOG_OUT
-            File.AppendAllText(logPath, DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss.fff") + "    " + msg + Environment.NewLine);
+            Logging(logPath, DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss.fff") + "    " + msg + Environment.NewLine);
 #endif
+        }
+
+        /************************************************************************/
+        /* 関数名   : Logging          			    		          			*/
+        /* 機能     : ログ書き込み処理                                          */
+        /* 引数     : [string] logFullPath - ログ出力先パス                     */
+        /*          : [string] logstr - ログ文言                                */
+        /* 戻り値   : なし														*/
+        /************************************************************************/
+        private void Logging(string logFullPath, string logstr)
+        {
+            FileStream fs = new FileStream(logFullPath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
+            StreamWriter sw = new StreamWriter(fs, Encoding.GetEncoding("Shift_JIS"));
+            TextWriter tw = TextWriter.Synchronized(sw);
+            tw.Write(logstr);
+            tw.Flush();
+            fs.Close();
         }
     }
 }
