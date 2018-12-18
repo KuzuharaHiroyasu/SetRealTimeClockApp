@@ -31,7 +31,6 @@
             this.components = new System.ComponentModel.Container();
             this.setClock_button = new System.Windows.Forms.Button();
             this.serialPort = new System.IO.Ports.SerialPort(this.components);
-            this.label = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // setClock_button
@@ -50,21 +49,12 @@
             this.serialPort.PortName = "COM5";
             this.serialPort.DataReceived += new System.IO.Ports.SerialDataReceivedEventHandler(this.serialPort_DataReceived);
             // 
-            // label
-            // 
-            this.label.AutoSize = true;
-            this.label.Location = new System.Drawing.Point(42, 37);
-            this.label.Name = "label";
-            this.label.Size = new System.Drawing.Size(0, 12);
-            this.label.TabIndex = 2;
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(239, 127);
             this.ControlBox = false;
-            this.Controls.Add(this.label);
             this.Controls.Add(this.setClock_button);
             this.Name = "Form1";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
@@ -73,14 +63,12 @@
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
             this.Shown += new System.EventHandler(this.Form1_Shown);
             this.ResumeLayout(false);
-            this.PerformLayout();
 
         }
 
         #endregion
         private System.Windows.Forms.Button setClock_button;
         private System.IO.Ports.SerialPort serialPort;
-        private System.Windows.Forms.Label label;
     }
 }
 
