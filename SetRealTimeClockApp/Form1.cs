@@ -4,6 +4,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -28,8 +29,7 @@ namespace SetRealTimeClockApp
         public static extern bool SetLocalTime(ref SystemTime sysTime);
 
         SystemTime sysTime = new SystemTime();
-        string clock = "";
-//        string temp = "";
+        string data = "";
         bool ret = false;
         
         // ログ出力パス
@@ -42,7 +42,6 @@ namespace SetRealTimeClockApp
                 Directory.CreateDirectory(logPath);
             }
             logPath = logPath + "\\log.txt";
-            log_output("[START]SetRealTimeClockApp");
 
             InitializeComponent();
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
@@ -56,9 +55,11 @@ namespace SetRealTimeClockApp
         /************************************************************************/
         private void Form1_Shown(object sender, EventArgs e)
         {
+            log_output("[START]SetRealTimeClockApp");
+
             serialPort.PortName = "COM5";   // 選択されたCOMをポート名に設定
             serialPort.Open();  // ポートを開く
-            
+
             Task.Run(() => writeData());    // 別タスクで時刻設定コマンド送信
         }
 
@@ -85,14 +86,14 @@ namespace SetRealTimeClockApp
             byte[] param = new byte[1];
             param[0] = (byte)2; // 時刻設定コード
 
-            System.Threading.Thread.Sleep(5000);
+            System.Threading.Thread.Sleep(10000);
 
             //時刻設定コマンド送信(リトライ10回)
             do
             {
                 log_output("writeData:" + i);
                 serialPort.Write(param, 0, param.Length);
-                System.Threading.Thread.Sleep(300);
+                System.Threading.Thread.Sleep(3000);
                 i++;
             } while (!ret && i < 10);
             
@@ -117,47 +118,51 @@ namespace SetRealTimeClockApp
         /************************************************************************/
         private void serialPort_DataReceived(object sender, System.IO.Ports.SerialDataReceivedEventArgs e)
         {
+            int beginIndex;
+            int endIndex;
+
             try
             {
-                string data = serialPort.ReadExisting();	// ポートから文字列を受信する
-                if (!string.IsNullOrEmpty(data))
-                {
-                    Invoke((MethodInvoker)(() =>	// 受信用スレッドから切り替えてデータを書き込む
-                    {
-                        switch(data)
-                        {
-                            case "YEAR":
-                                sysTime.wYear = Convert.ToUInt16(clock);
-                                break;
-                            case "MONTH":
-                                sysTime.wMonth = Convert.ToUInt16(clock);
-                                break;
-                            case "DAY":
-                                sysTime.wDay = Convert.ToUInt16(clock);
-                                break;
-                            case "HOUR":
-                                sysTime.wHour = Convert.ToUInt16(clock);
-                                break;
-                            case "MINUTE":
-                                sysTime.wMinute = Convert.ToUInt16(clock);
-                                break;
-                            case "SECOND":
-                                sysTime.wSecond = Convert.ToUInt16(clock);
-                                sysTime.wMiliseconds = 0;
-                                break;
-                            case "END":
-                                // システム時刻を設定する
-                                ret = SetLocalTime(ref sysTime);
-                                log_output("[RTC]Set : " + ret);
-                                //                                label.Text = temp;
-                                break;
-                            default:
-                                clock = data;
-//                                temp = temp + data;
-                                break;
-                        }
-                        Thread.Sleep(10);
-                    }));
+                data += serialPort.ReadExisting();	// ポートから文字列を受信する
+                log_output(data);
+                if(!ret)
+                { //システム時刻未設定
+                    if (0 <= data.IndexOf("Y") && 0 <= data.IndexOf("END"))
+                    { // 受信データに"Y"と"END"が含まれている
+                        // 年
+                        beginIndex = data.IndexOf("Y");
+                        endIndex = data.IndexOf("M");
+                        log_output(data.Substring((beginIndex + 1), (endIndex - 1 - beginIndex)));
+                        sysTime.wYear = Convert.ToUInt16(data.Substring((beginIndex + 1), (endIndex - 1 - beginIndex)));
+                        // 月
+                        beginIndex = endIndex;
+                        endIndex = data.IndexOf("D");
+                        log_output(data.Substring((beginIndex + 1), (endIndex - 1 - beginIndex)));
+                        sysTime.wMonth = Convert.ToUInt16(data.Substring((beginIndex + 1), (endIndex - 1 - beginIndex)));
+                        // 日
+                        beginIndex = endIndex;
+                        endIndex = data.IndexOf("h");
+                        log_output(data.Substring((beginIndex + 1), (endIndex - 1 - beginIndex)));
+                        sysTime.wDay = Convert.ToUInt16(data.Substring((beginIndex + 1), (endIndex - 1 - beginIndex)));
+                        // 時
+                        beginIndex = endIndex;
+                        endIndex = data.IndexOf("m");
+                        log_output(data.Substring((beginIndex + 1), (endIndex - 1 - beginIndex)));
+                        sysTime.wHour = Convert.ToUInt16(data.Substring((beginIndex + 1), (endIndex - 1 - beginIndex)));
+                        // 分
+                        beginIndex = endIndex;
+                        endIndex = data.IndexOf("s");
+                        log_output(data.Substring((beginIndex + 1), (endIndex - 1 - beginIndex)));
+                        sysTime.wMinute = Convert.ToUInt16(data.Substring((beginIndex + 1), (endIndex - 1 - beginIndex)));
+                        // 秒
+                        beginIndex = endIndex;
+                        endIndex = data.IndexOf("END");
+                        log_output(data.Substring((beginIndex + 1), (endIndex - 1 - beginIndex)));
+                        sysTime.wSecond = Convert.ToUInt16(data.Substring((beginIndex + 1), (endIndex - 1 - beginIndex)));
+                        sysTime.wMiliseconds = 0;
+                        ret = SetLocalTime(ref sysTime);
+                        log_output("[RTC]Set : " + ret);
+                    }
                 }
             }
             catch (Exception ex)
